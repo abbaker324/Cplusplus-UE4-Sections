@@ -12,3 +12,4 @@ BuildingEscape/Content/StarterContent
 # Unreal Derived Files
 #################################
 *.VC.db
+*.opendb
