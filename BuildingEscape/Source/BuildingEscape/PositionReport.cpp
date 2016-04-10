@@ -21,8 +21,11 @@ void UPositionReport::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	FString ownerName = this->GetOwner()->GetName();
+
+	FString objectPos = this->GetOwner()->GetTransform().GetLocation().ToString();
+
+	UE_LOG(LogTemp, Warning, TEXT("%s is at %s!"), *ownerName, *objectPos);
 }
 
 
