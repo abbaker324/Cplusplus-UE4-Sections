@@ -27,8 +27,12 @@ private:
 	float Reach = 100.0f;
 
 	UPhysicsHandleComponent* PhysicsHandle = nullptr;
-
 	UInputComponent* Input = nullptr;
+
+	FVector PawnLocation;
+	FRotator PawnRotator;
+
+	void UpdateTransformData();
 
 	void Grab();
 
@@ -40,4 +44,5 @@ private:
 
 	const FHitResult GetFirstPhysicsObjectFromTrace();
 
+	const FVector GetLineTraceEnd();
 };

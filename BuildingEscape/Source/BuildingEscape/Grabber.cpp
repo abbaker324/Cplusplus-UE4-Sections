@@ -28,7 +28,29 @@ void UGrabber::BeginPlay()
 	
 }
 
-void UGrabber::Grab() 
+///OnTick: If there is a grabbed component, move it around using the LineTraceEnd vector.
+void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (PhysicsHandle->GrabbedComponent)
+	{
+		UpdateTransformData();
+		PhysicsHandle->SetTargetLocation(GetLineTraceEnd());
+	}
+}
+
+
+///Called by both the tick method and the raytrace method on demand to update Location and Rotation.
+void UGrabber::UpdateTransformData()
+{
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
+		OUT PawnLocation, OUT PawnRotator
+	);
+}
+
+///Gets the first object hit by raytrace from pawn, along direction vector within Reach. If body found, attach it is PhysicsHandle.
+void UGrabber::Grab()
 {
 	auto Hit = this->GetFirstPhysicsObjectFromTrace();
 	auto ActorHit = Hit.GetActor();
@@ -36,7 +58,6 @@ void UGrabber::Grab()
 	if (ActorHit) 
 	{
 		auto ComponentToGrab = Hit.GetComponent();
-
 		PhysicsHandle->GrabComponent(ComponentToGrab, NAME_None, ActorHit->GetActorLocation(), true);
 
 		UE_LOG(LogTemp, Warning, TEXT("Grabbing %s!"), *(ActorHit->GetName()));
@@ -71,45 +92,20 @@ void UGrabber::GetInput()
 	}
 }
 
-const FHitResult UGrabber::GetFirstPhysicsObjectFromTrace()
+const FVector UGrabber::GetLineTraceEnd() 
 {
-	//Collect spatial information for pawn.
-	FVector PawnLocation;
-	FRotator PawnRotation;
-	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
-		OUT PawnLocation, OUT PawnRotation
-	);
-
-	//Ray trace in direction player is facing.
-	FVector LineTraceEnd = PawnLocation + (PawnRotation.Vector() * Reach);
-
-	FHitResult Hit;
-	FCollisionQueryParams queryParams(FName(""), false, GetOwner());
-	GetWorld()->LineTraceSingleByObjectType(
-		OUT Hit, PawnLocation, LineTraceEnd, FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody), queryParams
-	);
-
-	return Hit;
+	UpdateTransformData();
+	return PawnLocation + (PawnRotator.Vector() * Reach);
 }
 
-// Called every frame
-void UGrabber::TickComponent( float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction )
+const FHitResult UGrabber::GetFirstPhysicsObjectFromTrace()
 {
-	Super::TickComponent( DeltaTime, TickType, ThisTickFunction );
-
-	//Collect spatial information for pawn.
-	FVector PawnLocation;
-	FRotator PawnRotation;
-	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
-		OUT PawnLocation, OUT PawnRotation
+	FHitResult HitResult;
+	FCollisionQueryParams queryParams(FName(""), false, GetOwner());
+	GetWorld()->LineTraceSingleByObjectType(
+		OUT HitResult, PawnLocation, GetLineTraceEnd(), FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody), queryParams
 	);
 
-	//Ray trace in direction player is facing.
-	FVector LineTraceEnd = PawnLocation + (PawnRotation.Vector() * Reach);
-
-	if (PhysicsHandle->GrabbedComponent) 
-	{
-		PhysicsHandle->SetTargetLocation(LineTraceEnd);
-	}
+	return HitResult;
 }
 
