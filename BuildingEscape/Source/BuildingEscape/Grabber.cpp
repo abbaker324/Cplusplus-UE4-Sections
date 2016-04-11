@@ -23,51 +23,93 @@ void UGrabber::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	UE_LOG(LogTemp, Warning, TEXT("Grabber reporting for duty!"));
+	GetPhysicsHandle();
+	GetInput();
 	
 }
 
+void UGrabber::Grab() 
+{
+	auto Hit = this->GetFirstPhysicsObjectFromTrace();
+	auto ActorHit = Hit.GetActor();
+	
+	if (ActorHit) 
+	{
+		auto ComponentToGrab = Hit.GetComponent();
+
+		PhysicsHandle->GrabComponent(ComponentToGrab, NAME_None, ActorHit->GetActorLocation(), true);
+
+		UE_LOG(LogTemp, Warning, TEXT("Grabbing %s!"), *(ActorHit->GetName()));
+	}
+}
+
+void UGrabber::Release() 
+{
+	PhysicsHandle->ReleaseComponent();
+}
+
+void UGrabber::GetPhysicsHandle()
+{
+	this->PhysicsHandle = this->GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
+	if (!PhysicsHandle)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s is missing physics handler component."), *(this->GetOwner()->GetName()));
+	}
+}
+
+void UGrabber::GetInput()
+{
+	this->Input = this->GetOwner()->FindComponentByClass<UInputComponent>();
+	if (this->Input)
+	{
+		Input->BindAction("Grab", IE_Pressed, this, &UGrabber::Grab);
+		Input->BindAction("Grab", IE_Released, this, &UGrabber::Release);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s is missing input component."), *(this->GetOwner()->GetName()));
+	}
+}
+
+const FHitResult UGrabber::GetFirstPhysicsObjectFromTrace()
+{
+	//Collect spatial information for pawn.
+	FVector PawnLocation;
+	FRotator PawnRotation;
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
+		OUT PawnLocation, OUT PawnRotation
+	);
+
+	//Ray trace in direction player is facing.
+	FVector LineTraceEnd = PawnLocation + (PawnRotation.Vector() * Reach);
+
+	FHitResult Hit;
+	FCollisionQueryParams queryParams(FName(""), false, GetOwner());
+	GetWorld()->LineTraceSingleByObjectType(
+		OUT Hit, PawnLocation, LineTraceEnd, FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody), queryParams
+	);
+
+	return Hit;
+}
 
 // Called every frame
 void UGrabber::TickComponent( float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction )
 {
 	Super::TickComponent( DeltaTime, TickType, ThisTickFunction );
 
-	// Get player view point this tick.
-	FVector Location;
-	FRotator Rotation;
+	//Collect spatial information for pawn.
+	FVector PawnLocation;
+	FRotator PawnRotation;
 	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
-		OUT Location, OUT Rotation
+		OUT PawnLocation, OUT PawnRotation
 	);
 
-	//UE_LOG(LogTemp, Warning, TEXT("Player view point information: [Locaton: %s] [Rotation: %s]"),
-	//	*Location.ToString(), *Rotation.ToString()
-	//);
+	//Ray trace in direction player is facing.
+	FVector LineTraceEnd = PawnLocation + (PawnRotation.Vector() * Reach);
 
-	//Raycast out to reach distance.
-	FVector LineTraceEnd = Location + (Rotation.Vector() * this->Reach);
-	
-	//Create query parameters for a simple line trace that ignores the owner (player pawn.)
-	FCollisionQueryParams queryParams(FName(TEXT("")), false, GetOwner());
-	
-	FHitResult HitResult;
-
-	GetWorld()->LineTraceSingleByObjectType(
-		OUT HitResult, Location, LineTraceEnd,
-		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
-		queryParams
-	);
-
-	AActor* ActorHit = HitResult.GetActor();
-
-	if (ActorHit)
+	if (PhysicsHandle->GrabbedComponent) 
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Line trace hit: %s..."), *(ActorHit->GetName()));
+		PhysicsHandle->SetTargetLocation(LineTraceEnd);
 	}
-
-
-	//See what we hit.
-	DrawDebugLine(this->GetWorld(), Location, LineTraceEnd, FColor(255, 0, 0), false, 0.f, 0, 10.f);
 }
 
