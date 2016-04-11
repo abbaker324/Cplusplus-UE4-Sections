@@ -47,6 +47,25 @@ void UGrabber::TickComponent( float DeltaTime, ELevelTick TickType, FActorCompon
 
 	//Raycast out to reach distance.
 	FVector LineTraceEnd = Location + (Rotation.Vector() * this->Reach);
+	
+	//Create query parameters for a simple line trace that ignores the owner (player pawn.)
+	FCollisionQueryParams queryParams(FName(TEXT("")), false, GetOwner());
+	
+	FHitResult HitResult;
+
+	GetWorld()->LineTraceSingleByObjectType(
+		OUT HitResult, Location, LineTraceEnd,
+		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
+		queryParams
+	);
+
+	AActor* ActorHit = HitResult.GetActor();
+
+	if (ActorHit)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Line trace hit: %s..."), *(ActorHit->GetName()));
+	}
+
 
 	//See what we hit.
 	DrawDebugLine(this->GetWorld(), Location, LineTraceEnd, FColor(255, 0, 0), false, 0.f, 0, 10.f);
