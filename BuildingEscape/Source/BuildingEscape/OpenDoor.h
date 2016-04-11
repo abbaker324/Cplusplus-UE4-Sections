@@ -26,12 +26,15 @@ public:
 	void CloseDoor();
 
 private:
-	UPROPERTY(VisibleAnywhere)
-	float openAngle = 90.f;
+	UPROPERTY(EditAnywhere)
+	float openAngle = -90.f;
 
 	UPROPERTY(EditAnywhere)
 	ATriggerVolume* PressurePlate;
 
-	bool doorOpen;
+	UPROPERTY(EditAnywhere)
+	float DoorCloseDelay = 1.f;
+
+	float LastDoorOpenTime;
 
 };
