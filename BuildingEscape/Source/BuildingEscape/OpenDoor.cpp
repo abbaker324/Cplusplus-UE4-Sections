@@ -21,19 +21,46 @@ void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AActor* owner = this->GetOwner();
-
-	FRotator rotation = FRotator(0.0f, -60.0f, 0.0f);
-
-	owner->SetActorRotation(rotation);
 }
 
+void UOpenDoor::OpenDoor() {
+	if (!this->doorOpen)
+	{
+		AActor* owner = this->GetOwner();
+
+		FRotator rotation = FRotator(0.0f, -60.0f, 0.0f);
+
+		owner->SetActorRotation(rotation);
+	}
+}
+
+void UOpenDoor::CloseDoor() {
+	if (this->doorOpen)
+	{
+		AActor* owner = this->GetOwner();
+
+		FRotator rotation = FRotator(0.0f, 60.0f, 0.0f);
+
+		owner->SetActorRotation(rotation);
+	}
+}
 
 // Called every frame
 void UOpenDoor::TickComponent( float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction )
 {
 	Super::TickComponent( DeltaTime, TickType, ThisTickFunction );
 
-	// ...
+	APawn* playerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
+
+	//Poll the trigger volume.
+	if (this->PressurePlate->IsOverlappingActor(playerPawn)) 
+	{
+		OpenDoor();
+	}
+	else if(this->PressurePlate->IsOverlappingActor(playerPawn)) {
+		CloseDoor();
+	}
+
+
 }
 
