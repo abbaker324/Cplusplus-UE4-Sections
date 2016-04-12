@@ -23,20 +23,17 @@ void UOpenDoor::BeginPlay()
 
 }
 
-void UOpenDoor::OpenDoor() {
-	AActor* owner = this->GetOwner();
-
-	FRotator rotation = FRotator(0.0f, openAngle, 0.0f);
-
-	owner->SetActorRotation(rotation);
+void UOpenDoor::OpenDoor() 
+{
+//	AActor* owner = this->GetOwner();
+//	FRotator rotation = FRotator(0.0f, openAngle, 0.0f);
+//	owner->SetActorRotation(rotation);
+	this->OnOpenRequest.Broadcast();
 }
 
-void UOpenDoor::CloseDoor() {
-	AActor* owner = this->GetOwner();
-
-	FRotator rotation = FRotator(0.0f, 0.0f, 0.0f);
-
-	owner->SetActorRotation(rotation);
+void UOpenDoor::CloseDoor() 
+{
+	this->OnCloseRequest.Broadcast();
 }
 
 // Called every frame
@@ -65,21 +62,21 @@ float UOpenDoor::GetTotalMassOfActorsOnPlate()
 {
 	float totalMass = 0.f;
 
-	TArray<AActor*> OverlappingActors;
-	PressurePlate->GetOverlappingActors(OUT OverlappingActors);
-
-	for(const auto& Actor : OverlappingActors) 
+	if (PressurePlate)
 	{
-		UPrimitiveComponent* Mesh = Actor->FindComponentByClass<UPrimitiveComponent>();
+		TArray<AActor*> OverlappingActors;
+		PressurePlate->GetOverlappingActors(OUT OverlappingActors);
 
-		if (Mesh) 
+		for (const auto& Actor : OverlappingActors)
 		{
-			totalMass += Mesh->GetMass();
+			UPrimitiveComponent* Mesh = Actor->FindComponentByClass<UPrimitiveComponent>();
 
-			UE_LOG(LogTemp, Warning, TEXT("%s is on pressure plate!"), *Actor->GetName());
+			if (Mesh)
+			{
+				totalMass += Mesh->GetMass();
+			}
 		}
 	}
-
 
 	return totalMass;
 }
