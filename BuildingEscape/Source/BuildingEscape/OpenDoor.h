@@ -37,4 +37,6 @@ private:
 
 	float LastDoorOpenTime;
 
+	float GetTotalMassOfActorsOnPlate();
+
 };

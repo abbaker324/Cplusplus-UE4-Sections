@@ -47,7 +47,7 @@ void UOpenDoor::TickComponent( float DeltaTime, ELevelTick TickType, FActorCompo
 	APawn* playerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
 
 	//Poll the trigger volume.
-	if (this->PressurePlate->IsOverlappingActor(playerPawn)) 
+	if (GetTotalMassOfActorsOnPlate() > 30.f) //TODO: Replace hard coded value with a parameter.
 	{
 		OpenDoor();
 		this->LastDoorOpenTime = GetWorld()->GetTimeSeconds();
@@ -61,3 +61,25 @@ void UOpenDoor::TickComponent( float DeltaTime, ELevelTick TickType, FActorCompo
 	}
 }
 
+float UOpenDoor::GetTotalMassOfActorsOnPlate() 
+{
+	float totalMass = 0.f;
+
+	TArray<AActor*> OverlappingActors;
+	PressurePlate->GetOverlappingActors(OUT OverlappingActors);
+
+	for(const auto& Actor : OverlappingActors) 
+	{
+		UPrimitiveComponent* Mesh = Actor->FindComponentByClass<UPrimitiveComponent>();
+
+		if (Mesh) 
+		{
+			totalMass += Mesh->GetMass();
+
+			UE_LOG(LogTemp, Warning, TEXT("%s is on pressure plate!"), *Actor->GetName());
+		}
+	}
+
+
+	return totalMass;
+}
