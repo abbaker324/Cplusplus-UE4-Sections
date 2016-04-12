@@ -23,19 +23,6 @@ void UOpenDoor::BeginPlay()
 
 }
 
-void UOpenDoor::OpenDoor() 
-{
-//	AActor* owner = this->GetOwner();
-//	FRotator rotation = FRotator(0.0f, openAngle, 0.0f);
-//	owner->SetActorRotation(rotation);
-	this->OnOpenRequest.Broadcast();
-}
-
-void UOpenDoor::CloseDoor() 
-{
-	this->OnCloseRequest.Broadcast();
-}
-
 // Called every frame
 void UOpenDoor::TickComponent( float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction )
 {
@@ -43,18 +30,16 @@ void UOpenDoor::TickComponent( float DeltaTime, ELevelTick TickType, FActorCompo
 
 	APawn* playerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
 
-	//Poll the trigger volume.
-	if (GetTotalMassOfActorsOnPlate() > 30.f) //TODO: Replace hard coded value with a parameter.
-	{
-		OpenDoor();
-		this->LastDoorOpenTime = GetWorld()->GetTimeSeconds();
-	}
-	
-	//Check if its time to close the door.
-	float currentTime = GetWorld()->GetTimeSeconds();
+	float TotalMass = GetTotalMassOfActorsOnPlate();
 
-	if (currentTime - this->LastDoorOpenTime >= this->DoorCloseDelay) {
-		this->CloseDoor();
+	//Poll the trigger volume.
+	if (TotalMass > TriggerMass) //TODO: Replace hard coded value with a parameter.
+	{
+		OnOpen.Broadcast();
+	} 
+	else
+	{
+		OnClose.Broadcast();
 	}
 }
 
