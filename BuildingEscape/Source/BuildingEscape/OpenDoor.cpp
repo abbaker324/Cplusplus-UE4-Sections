@@ -10,7 +10,7 @@ UOpenDoor::UOpenDoor()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	bWantsBeginPlay = true;
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
 }
@@ -21,31 +21,41 @@ void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
 
-}
-
-// Called every frame
-void UOpenDoor::TickComponent( float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction )
-{
-	Super::TickComponent( DeltaTime, TickType, ThisTickFunction );
-
-	APawn* playerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
-
-	float TotalMass = GetTotalMassOfActorsOnPlate();
-
-	//Poll the trigger volume.
-	if (TotalMass > TriggerMass) //TODO: Replace hard coded value with a parameter.
+	if(PressurePlate)
 	{
-		OnOpen.Broadcast();
-	} 
+		PressurePlate->OnActorBeginOverlap.AddDynamic(this, &UOpenDoor::ProcessPressurePlate);
+		PressurePlate->OnActorEndOverlap.AddDynamic(this, &UOpenDoor::ProcessPressurePlate);
+	}
 	else
 	{
-		OnClose.Broadcast();
+		UE_LOG(LogTemp, Error, TEXT("%s does not have a Pressure Plate."), *GetOwner()->GetName());
 	}
 }
 
-float UOpenDoor::GetTotalMassOfActorsOnPlate() 
+void UOpenDoor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	float totalMass = 0.f;
+	if (PressurePlate)
+	{
+		PressurePlate->OnActorBeginOverlap.RemoveAll(this);
+		PressurePlate->OnActorEndOverlap.RemoveAll(this);
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
+// Called every frame
+void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
+//Callback function for PressurePlate->OnActorBeginOverlap
+//Total up the mass of all actors on pressure plate. If it exceeds trigger mass, broadcast OnOpen, otherwise broadcast OnClose
+void UOpenDoor::ProcessPressurePlate(AActor* actor)
+{
+	UE_LOG(LogTemp, Error, TEXT("%s->ProcessPressurePlate!"), *GetOwner()->GetName());
+
+	float TotalMass = 0.f;
 
 	if (PressurePlate)
 	{
@@ -58,10 +68,18 @@ float UOpenDoor::GetTotalMassOfActorsOnPlate()
 
 			if (Mesh)
 			{
-				totalMass += Mesh->GetMass();
+				TotalMass += Mesh->GetMass();
 			}
 		}
-	}
 
-	return totalMass;
+		if (TotalMass > TriggerMass) //TODO: Replace hard coded value with a parameter.
+		{
+			OnOpen.Broadcast();
+		}
+		else
+		{
+			OnClose.Broadcast();
+		}
+	}
 }
+

@@ -20,11 +20,13 @@ public:
 	
 	// Called every frame
 	virtual void TickComponent( float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction ) override;
-
-		
+			
 private:
 	UPROPERTY(EditAnywhere)
 	float Reach = 100.0f;
+
+	UPROPERTY(EditAnywhere)
+	bool bDrawDebugLine = true;
 
 	UPhysicsHandleComponent* PhysicsHandle = nullptr;
 	UInputComponent* Input = nullptr;
