@@ -83,3 +83,12 @@ void UOpenDoor::ProcessPressurePlate(AActor* actor)
 	}
 }
 
+void UOpenDoor::OpenDoor()
+{
+	OnOpen.Broadcast();
+}
+
+void UOpenDoor::CloseDoor()
+{
+	OnClose.Broadcast();
+}

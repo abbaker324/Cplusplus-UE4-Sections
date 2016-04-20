@@ -24,6 +24,12 @@ public:
 
 	UFUNCTION()
 	void ProcessPressurePlate(AActor* actor);
+
+	UFUNCTION(BlueprintCallable, Category="OpenDoor")
+	void OpenDoor();
+
+	UFUNCTION(BlueprintCallable, Category = "OpenDoor")
+	void CloseDoor();
 	
 	// Called every frame
 	virtual void TickComponent( float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction ) override;
